@@ -1,8 +1,11 @@
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <print>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity) // I don't give a crap.
@@ -15,9 +18,15 @@ auto main(int argc, char** argv) -> int
         return 1;
     }
 
-    std::vector<std::string> inputFilePaths;
-                                                                                       // output file
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) // No other way to access argv
+    std::string outputFilePath = argv[argc - 1];
+    if (std::filesystem::exists(outputFilePath))
+    {
+        std::print("{} exists. Would overwrite. Delete manually or pick a different name.\n", outputFilePath);
+        return 1;
+    }
 
+    std::vector<std::string> inputFilePaths;
     for (auto argIdx : std::ranges::views::iota(1) | std::ranges::views::take(argc - 2))
     {
         // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) // No other way to access argv
@@ -25,18 +34,19 @@ auto main(int argc, char** argv) -> int
         std::print("Wordlist file {}: {}\n", argIdx, inputFilePaths.back());
     }
 
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) // No other way to access argv
-    std::string outputFilePath = argv[argc - 1];
-    auto outputFile = std::fstream(outputFilePath, std::ios::in | std::ios::out | std::ios::app);
+    auto outputFile = std::fstream(outputFilePath, std::ios::out | std::ios::trunc);
     if (!outputFile.is_open())
     {
         std::print("Can not open {} for writing.", outputFilePath);
         return 1;
     }
 
+    std::unordered_set<std::string> knownWordsCache{};
+
     for (const auto& inputFilePath : inputFilePaths)
     {
         std::print("{}", inputFilePath);
+        std::cout << std::flush;
 
         auto inputFile = std::ifstream(inputFilePath, std::ios::in);
         if (!inputFile.is_open())
@@ -54,35 +64,14 @@ auto main(int argc, char** argv) -> int
         {
             lineCount++;
             // run over the output file and find the line.
-            outputFile.seekg(0, std::ios::beg);
-            bool lineFound = false;
-            std::string compareLine;
-            while (std::getline(outputFile, compareLine))
-            {
-                if (inputLine == compareLine)
-                {
-                    duplicates++;
-                    lineFound = true;
-                    break;
-                }
-            }
-
-            if (outputFile.fail() && !outputFile.eof())
-            {
-                std::print(" - Read error in output file\n");
-                return 1;
-            }
-
-            if (outputFile.eof())
-            {
-                outputFile.clear();
-            }
+            bool lineFound = knownWordsCache.contains(inputLine);
+            duplicates += static_cast<std::uint64_t>(lineFound);
 
             if (!lineFound)
             {
                 newLines++;
-                outputFile.seekg(0, std::ios::end);
                 outputFile << inputLine << '\n';
+                knownWordsCache.insert(inputLine);
                 if (outputFile.fail())
                 {
                     std::print(" - Write error in output file\n");
@@ -98,6 +87,7 @@ auto main(int argc, char** argv) -> int
         }
         inputFile.close();
         std::print(" - Done. {} Lines processed. {} new lines added. {} duplicates ignored.\n", lineCount, newLines, duplicates);
+        std::cout << std::flush;
     }
 
     return 0;
