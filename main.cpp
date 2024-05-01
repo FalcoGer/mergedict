@@ -55,7 +55,7 @@ auto main(int argc, char** argv) -> int
         auto inputFile = std::ifstream(inputFilePath, std::ios::in);
         if (!inputFile.is_open())
         {
-            std::print("- Unable to open.\n");
+            std::print(" - Unable to open.\n");
             return 1;
         }
         // run over the input file, line by line
