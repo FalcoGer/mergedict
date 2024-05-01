@@ -6,15 +6,19 @@
 #include <ranges>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity) // I don't give a crap.
 auto main(int argc, char** argv) -> int
 {
-    if (argc < 3) // at least program path, 2 files to merge and the output.
+    if (argc < 3)    // at least program path, 2 files to merge and the output.
     {
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) // No other way to access argv
-        std::print("Usage:\n\t{} <file1> [<file2]> ...] <output file>\n\tYou are expected to make sure not to provide the same file twice.\n", argv[0]);
+        std::print(
+          "Usage:\n\t{} <file1> [<file2]> ...] <output file>\n\tYou are expected to make sure not to provide the same "
+          "file twice.\n",
+          argv[0]    // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic) // No other way to access argv
+        );
         return 1;
     }
 
@@ -41,7 +45,7 @@ auto main(int argc, char** argv) -> int
         return 1;
     }
 
-    std::unordered_set<std::string> knownWordsCache{};
+    std::unordered_set<std::string> knownWordsCache {};
 
     for (const auto& inputFilePath : inputFilePaths)
     {
@@ -55,7 +59,7 @@ auto main(int argc, char** argv) -> int
             return 1;
         }
         // run over the input file, line by line
-        std::string inputLine;
+        std::string   inputLine;
         std::uint64_t lineCount {0};
         std::uint64_t newLines {0};
         std::uint64_t duplicates {0};
@@ -64,8 +68,8 @@ auto main(int argc, char** argv) -> int
         {
             lineCount++;
             // run over the output file and find the line.
-            bool lineFound = knownWordsCache.contains(inputLine);
-            duplicates += static_cast<std::uint64_t>(lineFound);
+            bool lineFound  = knownWordsCache.contains(inputLine);
+            duplicates     += static_cast<std::uint64_t>(lineFound);
 
             if (!lineFound)
             {
@@ -86,7 +90,9 @@ auto main(int argc, char** argv) -> int
             return 1;
         }
         inputFile.close();
-        std::print(" - Done. {} Lines processed. {} new lines added. {} duplicates ignored.\n", lineCount, newLines, duplicates);
+        std::print(
+          " - Done. {} Lines processed. {} new lines added. {} duplicates ignored.\n", lineCount, newLines, duplicates
+        );
         std::cout << std::flush;
     }
 
